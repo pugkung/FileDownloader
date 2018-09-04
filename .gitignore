@@ -1,0 +1,15 @@
+# Windows
+Thumbs.db
+
+# Mac
+.DS_Store
+
+# Maven
+target/
+log/
+
+# Eclipse
+.classpath
+.project
+.settings/
+bin/
