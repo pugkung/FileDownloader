@@ -15,6 +15,14 @@ public class FileDownloader implements Runnable{
 	private final int CONNECTION_TIMEOUT_LIMIT = 10000;
 	private final int READ_TIMEOUT_LIMIT = 10000;
 	
+	public enum DownloaderStatus {
+		COMPLETE,
+		IO_ERROR,
+		URL_ERROR
+	}
+	
+	private DownloaderStatus result;
+	
 	private File outputFile;
 	private String sourceURL;
 	private String targetFilePath;
@@ -36,17 +44,29 @@ public class FileDownloader implements Runnable{
 			URL url = new URL(sourceURL);
 			
 			logger.info("Start downloading: " + sourceURL);
-			FileUtils.copyURLToFile(url, outputFile, CONNECTION_TIMEOUT_LIMIT, READ_TIMEOUT_LIMIT);
+			copyURLToFile(url, outputFile);
 			
 			long finishTime = System.currentTimeMillis();
 			logger.info("Download complete: " + sourceURL + " (" + (finishTime - startTime) +  "ms)");
+			
+			result = DownloaderStatus.COMPLETE;
 		} catch (IOException ex) {
 			logger.error("Problem occurred while downloading: " + ex.getMessage());
 			logger.info("Cleaning up: " + outputFileName);
+			result = DownloaderStatus.IO_ERROR;
 			outputFile.delete();
         } catch (URISyntaxException ex) {
         	logger.error("Unable to generate output file: " + ex.getMessage());
+        	result = DownloaderStatus.URL_ERROR;
 		}
+	}
+	
+	public void copyURLToFile(URL url, File output) throws IOException {
+		FileUtils.copyURLToFile(url, output, CONNECTION_TIMEOUT_LIMIT, READ_TIMEOUT_LIMIT);
+	}
+	
+	public DownloaderStatus getResultCd() {
+		return result;
 	}
 
 	@Override
@@ -56,6 +76,13 @@ public class FileDownloader implements Runnable{
 	
 	public String generateOutputFileName(String url) throws URISyntaxException {
 		return getDomainName(url) + getSourceFilePath(url);
+	}
+	
+	public String getProtocal(String url) throws URISyntaxException {
+		URI uri = new URI(url);
+		String protocol = uri.getScheme();
+		
+		return protocol;
 	}
 	
 	public String getDomainName(String url) throws URISyntaxException {
