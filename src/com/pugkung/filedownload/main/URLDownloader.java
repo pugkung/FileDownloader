@@ -21,7 +21,7 @@ public class URLDownloader extends FileDownloader {
 	}
 	
 	@Override
-	protected DownloaderStatus downloadFile(String sourceURI, String outputFilePath){
+	public DownloaderStatus downloadFile(String sourceURI, String outputFilePath){
 		File outputFile = new File(outputFilePath);
 		try {
 			long startTime, finishTime;

@@ -5,6 +5,8 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
@@ -34,18 +36,18 @@ import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
-import com.pugkung.filedownload.main.FileDownloader;
 import com.pugkung.filedownload.main.FileDownloader.DownloaderStatus;
+import com.pugkung.filedownload.main.URLDownloader;
 
 @PowerMockIgnore("javax.management.*")
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({URL.class})
 public class FileDownloaderTester {
 	@Rule
-	  public TemporaryFolder tempFolder= new TemporaryFolder();
+	public TemporaryFolder tempFolder= new TemporaryFolder();
 	
 	@InjectMocks
-	FileDownloader fd;
+	URLDownloader fd;
 	
 	@Test
 	public void TestFileDownloader_stripHostNamefromLink() throws URISyntaxException {
@@ -53,10 +55,10 @@ public class FileDownloaderTester {
 		String testURL2 = "ftp://10.123.234.254:23/public/file";
 		String testURL3 = "https://www.hello-world.com/temp";
 		
-		FileDownloader fd = new FileDownloader("", "");
-		assertEquals("sub_test_com", fd.getDomainName(testURL));
-		assertEquals("10_123_234_254", fd.getDomainName(testURL2));
-		assertEquals("hello-world_com", fd.getDomainName(testURL3));
+		URLDownloader fd = new URLDownloader("", "");
+		assertEquals("sub_test_com", fd.getDomainNameFromURL(testURL));
+		assertEquals("10_123_234_254", fd.getDomainNameFromURL(testURL2));
+		assertEquals("hello-world_com", fd.getDomainNameFromURL(testURL3));
 	}
 	
 	@Test
@@ -64,25 +66,42 @@ public class FileDownloaderTester {
 		String testURL = "http://sub.test.com/some/path/afile.txt";
 		String testURL2 = "ftp://10.123.234.254:23/public/";
 		
-		FileDownloader fd = new FileDownloader("", "");
-		assertEquals("_some_path_afile.txt", fd.getSourceFilePath(testURL));
-		assertEquals("_public_", fd.getSourceFilePath(testURL2));
+		URLDownloader fd = new URLDownloader("", "");
+		assertEquals("_some_path_afile.txt", fd.getFilePathFromURL(testURL));
+		assertEquals("_public_", fd.getFilePathFromURL(testURL2));
 	}
 	
 	@Test(expected = URISyntaxException.class)
 	public void TestFileDownloader_tryParseInvalidURL() throws URISyntaxException {
 		String testURL = "http://sub.test.com/some/path/f i l e w i t h s p a c e";
 		
-		FileDownloader fd = new FileDownloader(testURL, "");
-		assertEquals("", fd.getDomainName(testURL));
+		URLDownloader fd = new URLDownloader(testURL, "");
+		assertEquals("", fd.getDomainNameFromURL(testURL));
 	}
 	
 	@Test(expected = URISyntaxException.class)
 	public void TestFileDownloader_tryParseInvalidHost() throws URISyntaxException {
 		String testURL = "ftp://257.255.253.251/folder/";
 		
-		FileDownloader fd = new FileDownloader(testURL, "");
-		assertEquals("", fd.getDomainName(testURL));
+		URLDownloader fd = new URLDownloader(testURL, "");
+		assertEquals("", fd.getDomainNameFromURL(testURL));
+	}
+	
+	@Test
+	public void TestFileDownloader_testRunner() throws Exception {
+		String testURL = "http://localhost/testfile.out";
+		String outputPath = "";
+		
+		fd = spy(new URLDownloader(testURL, outputPath));
+		
+		File result = new File(outputPath + fd.generateOutputFileName(testURL));
+		result.deleteOnExit();
+		
+		doReturn(result).when(fd).downloadFromURL(any(String.class), any(String.class));
+		fd.run();
+		
+		verify(fd, times(1)).downloadFromURL(any(String.class), any(String.class));
+		assertEquals(fd.getResultCd(),DownloaderStatus.COMPLETE);
 	}
 	
 	@Test
@@ -90,51 +109,51 @@ public class FileDownloaderTester {
 		String testURL = "http://localhost/testfile.out";
 		String outputPath = "";
 		
-		fd = spy(new FileDownloader(testURL, outputPath));
+		fd = spy(new URLDownloader(testURL, outputPath));
 		
 		File result = new File(outputPath + fd.generateOutputFileName(testURL));
 		result.deleteOnExit();
+		String outputFile = outputPath + fd.generateOutputFileName(testURL);
 		
 		doAnswer(new Answer(){
-            public File answer(InvocationOnMock invocation) throws Throwable {
-                result.createNewFile();
-                return result;
-            }}).when(fd).copyURLToFile(any(URL.class), eq(result));
+			public File answer(InvocationOnMock invocation) throws Throwable {
+				result.createNewFile();
+				return result;
+			}}).when(fd).downloadFromURL(any(String.class), any(String.class));
 		
-		fd.run();
+		DownloaderStatus status = fd.downloadFile(testURL, outputFile);
 		
-		verify(fd, times(1)).copyURLToFile(any(URL.class), eq(result));
-		assertEquals(fd.getResultCd(),DownloaderStatus.COMPLETE);
 		assertTrue(result.exists());
+		assertEquals(status, DownloaderStatus.COMPLETE);
 	}
+	
 	
 	@Test
 	public void TestFileDownloader_testDownloadFail() throws IOException {
 		String testURL = "https://localhost/file/not/exist";
 		String outputPath = "";
 		
-		fd = spy(new FileDownloader(testURL, outputPath));
+		fd = spy(new URLDownloader(testURL, outputPath));
 		File result = mock(File.class);
 		result.deleteOnExit();
-		URL mockURL = PowerMockito.mock(URL.class);
 		
-	    doNothing().when(fd).copyURLToFile(eq(mockURL), any(File.class));
+	    doThrow(IOException.class).when(fd).downloadFromURL(any(String.class), any(String.class));
 		
-		fd.run();
+		DownloaderStatus status = fd.downloadFile(testURL, outputPath);
 		
-		verify(fd, times(0)).copyURLToFile(any(URL.class), eq(result));
-		assertEquals(fd.getResultCd(),DownloaderStatus.IO_ERROR);
+		assertEquals(status,DownloaderStatus.IO_ERROR);
+		assertFalse(result.exists());
 	}
-	
 	
 	@Test
 	public void TestFileDownloader_connectionDropped() throws Exception {
 		String testURL = "http://localhost/testfile.out";
 		String outputPath = "";
 		
-		fd = spy(new FileDownloader(testURL, outputPath));
+		fd = spy(new URLDownloader(testURL, outputPath));
 		
-		File result = new File(outputPath + fd.generateOutputFileName(testURL));
+		String outputFile = outputPath + fd.generateOutputFileName(testURL);
+		File result = new File(outputFile);
 		result.deleteOnExit();
 		
 		URL mockURL = PowerMockito.mock(URL.class);
@@ -145,12 +164,10 @@ public class FileDownloaderTester {
 		PowerMockito.when(mockURL.openConnection()).thenReturn(mockConnection);
 		PowerMockito.when(mockConnection.getResponseCode()).thenThrow(expectedException);
 		
-		doNothing().when(fd).copyURLToFile(eq(mockURL), eq(result));
+		DownloaderStatus status = fd.downloadFile(testURL, outputFile);
 		
-		fd.run();
-		
-		verify(fd, times(1)).copyURLToFile(any(URL.class), eq(result));
-		assertEquals(fd.getResultCd(),DownloaderStatus.IO_ERROR);
+		verify(fd, times(1)).downloadFromURL(any(String.class), eq(outputFile));
+		assertEquals(status,DownloaderStatus.IO_ERROR);
 		assertFalse(result.exists());
 	}
 }

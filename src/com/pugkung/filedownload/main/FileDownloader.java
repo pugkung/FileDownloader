@@ -3,9 +3,9 @@ package com.pugkung.filedownload.main;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-abstract class FileDownloader implements Runnable{
+public abstract class FileDownloader implements Runnable{
 	
-	public enum DownloaderStatus {
+	public static enum DownloaderStatus {
 		COMPLETE,
 		IO_ERROR,
 		URL_ERROR
@@ -26,7 +26,7 @@ abstract class FileDownloader implements Runnable{
 		logger = LogManager.getLogger(FileDownloadClient.class);
 	}
 	
-	protected DownloaderStatus downloadFile(String sourceURI, String outputDir) {
+	public DownloaderStatus downloadFile(String sourceURI, String outputDir) {
 		throw new RuntimeException("downloadFile(string, string) need to be implemented.");
 	}
 
