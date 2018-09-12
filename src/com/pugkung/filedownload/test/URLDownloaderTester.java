@@ -11,11 +11,9 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.net.HttpURLConnection;
@@ -23,7 +21,6 @@ import java.net.SocketTimeoutException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
-import java.net.URLStreamHandler;
 
 import org.apache.commons.io.FileUtils;
 import org.junit.Rule;
@@ -44,7 +41,7 @@ import com.pugkung.filedownload.main.URLDownloader;
 @PowerMockIgnore("javax.management.*")
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({URL.class, URLConnection.class, FileUtils.class})
-public class FileDownloaderTester {
+public class URLDownloaderTester {
 	@Rule
 	public TemporaryFolder tempFolder= new TemporaryFolder();
 	
@@ -52,7 +49,7 @@ public class FileDownloaderTester {
 	URLDownloader fd;
 	
 	@Test
-	public void TestFileDownloader_stripHostNamefromLink() throws URISyntaxException {
+	public void TestURLDownloader_stripHostNamefromLink() throws URISyntaxException {
 		String testURL = "http://sub.test.com/some/path";
 		String testURL2 = "ftp://10.123.234.254:23/public/file";
 		String testURL3 = "https://www.hello-world.com/temp";
@@ -64,7 +61,7 @@ public class FileDownloaderTester {
 	}
 	
 	@Test
-	public void TestFileDownloader_stripFilePathfromLink() throws URISyntaxException {
+	public void TestURLDownloader_stripFilePathfromLink() throws URISyntaxException {
 		String testURL = "http://sub.test.com/some/path/afile.txt";
 		String testURL2 = "ftp://10.123.234.254:23/public/";
 		
@@ -74,7 +71,7 @@ public class FileDownloaderTester {
 	}
 	
 	@Test(expected = URISyntaxException.class)
-	public void TestFileDownloader_tryParseInvalidURL() throws URISyntaxException {
+	public void TestURLDownloader_tryParseInvalidURL() throws URISyntaxException {
 		String testURL = "http://sub.test.com/some/path/f i l e w i t h s p a c e";
 		
 		URLDownloader fd = new URLDownloader(testURL, "");
@@ -82,7 +79,7 @@ public class FileDownloaderTester {
 	}
 	
 	@Test(expected = URISyntaxException.class)
-	public void TestFileDownloader_tryParseInvalidHost() throws URISyntaxException {
+	public void TestURLDownloader_tryParseInvalidHost() throws URISyntaxException {
 		String testURL = "ftp://257.255.253.251/folder/";
 		
 		URLDownloader fd = new URLDownloader(testURL, "");
@@ -90,7 +87,7 @@ public class FileDownloaderTester {
 	}
 	
 	@Test
-	public void TestFileDownloader_testRunner() throws Exception {
+	public void TestURLDownloader_testRunner() throws Exception {
 		String testURL = "http://localhost/testfile.out";
 		String outputPath = "";
 		
@@ -107,7 +104,7 @@ public class FileDownloaderTester {
 	}
 	
 	@Test
-	public void TestFileDownloader_testDownloadSuccessful() throws Exception {
+	public void TestURLDownloader_testDownloadSuccessful() throws Exception {
 		String testURL = "http://localhost/testfile.out";
 		String outputPath = "";
 		
@@ -130,7 +127,7 @@ public class FileDownloaderTester {
 	}
 	
 	@Test
-	public void TestFileDownloader_testDownloadFail() throws IOException {
+	public void TestURLDownloader_testDownloadFail() throws IOException {
 		String testURL = "https://localhost/file/not/exist";
 		String outputPath = "";
 		
@@ -147,7 +144,7 @@ public class FileDownloaderTester {
 	}
 	
 	@Test
-	public void TestFileDownloader_connectionDropped() throws Exception {
+	public void TestURLDownloader_connectionDropped() throws Exception {
 		String testURL = "http://localhost/testfile.out";
 		String outputPath = "";
 		
@@ -173,7 +170,7 @@ public class FileDownloaderTester {
 	}
 	
 	@Test
-	public void TestFileDownloader_testLargeFile() throws Exception {
+	public void TestURLDownloader_testLargeFile() throws Exception {
 		String testURL = "http://localhost/testfile.out";
 		String outputPath = "";
 		
