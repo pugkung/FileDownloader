@@ -28,7 +28,8 @@ public class URLDownloader extends FileDownloader {
 			startTime = System.currentTimeMillis();
 			logger.info("Start downloading: " + sourceURI);
 			
-			outputFile = downloadFromURL(sourceURI, outputFilePath);
+			URL url = new URL(sourceURI);
+			downloadFromURL(url, outputFile);
 			
 			finishTime = System.currentTimeMillis();
 			logger.info("Task finished: " + sourceURI + " (" + (finishTime - startTime) +  "ms)");
@@ -41,13 +42,8 @@ public class URLDownloader extends FileDownloader {
         }
 	}
 	
-	public File downloadFromURL(String sourceURL, String outputFilePath) throws IOException {
-		File outputFile = new File(outputFilePath);
-		URL url = new URL(sourceURL);
-		
+	public void downloadFromURL(URL url, File outputFile) throws IOException {
 		FileUtils.copyURLToFile(url, outputFile, CONNECTION_TIMEOUT_LIMIT, READ_TIMEOUT_LIMIT);
-		
-		return outputFile;
 	}
 	
 	public String getDomainNameFromURL(String url) throws URISyntaxException {
