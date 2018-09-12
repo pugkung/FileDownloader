@@ -25,6 +25,7 @@ public class FileDownloadClient {
 	
 	public static void main(String args[]) {
 		
+		FileDownloadClient client = new FileDownloadClient();
 		logger = LogManager.getLogger(FileDownloadClient.class);
 		threads = new ArrayList<Thread>();
 		
@@ -39,7 +40,7 @@ public class FileDownloadClient {
 		
 		ConfigReader config;
 		try {
-			config = loadConfigFile(configLocation);
+			config = client.loadConfigFile(configLocation);
 			config.loadConfigData();
 		} catch (FileNotFoundException ex) {
 			exitStatusCode = ExitStatus.MISSING_CONFIGURATION;
@@ -50,8 +51,8 @@ public class FileDownloadClient {
 		List<String> urlList = config.getURLs();
 		
 		if (!urlList.isEmpty()) {
-			distributeURLsToDownloaderThread(urlList, outputPath);
-			waitForAllThreads();
+			client.distributeURLsToDownloaderThread(urlList, outputPath);
+			client.waitForAllThreads();
 			
 			logger.info("All files have been processed.");
 			exitStatusCode = ExitStatus.NORMAL;
@@ -62,7 +63,7 @@ public class FileDownloadClient {
 		}
 	}
 	
-	public static ConfigReader loadConfigFile(String configLocation) throws FileNotFoundException {
+	public ConfigReader loadConfigFile(String configLocation) throws FileNotFoundException {
 		File configFile = new File(configLocation);
 		
 		if (configFile.exists()) {
@@ -75,20 +76,20 @@ public class FileDownloadClient {
 		}
 	}
 	
-	public static void distributeURLsToDownloaderThread(List<String> urlList, String outputPath) {
+	public void distributeURLsToDownloaderThread(List<String> urlList, String outputPath) {
 		for (String item : urlList) {
 			executeDownloaderThread(item, outputPath);
 		}
 	}
 	
-	public static void executeDownloaderThread(String targetURL, String outputPath) {
+	public void executeDownloaderThread(String targetURL, String outputPath) {
 		URLDownloader fd = new URLDownloader(targetURL, outputPath);
 		Thread t = new Thread(fd);
 		t.start();
 		threads.add(t);
 	}
 	
-	public static void waitForAllThreads() {
+	public void waitForAllThreads() {
 		for (Thread t : threads) {
 			try {
 				t.join();
@@ -98,7 +99,7 @@ public class FileDownloadClient {
 		}
 	}
 	
-	public static ExitStatus getExitStatusCode() {
+	public ExitStatus getExitStatusCode() {
 		return exitStatusCode;
 	}
 }
