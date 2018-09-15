@@ -23,9 +23,7 @@ import java.net.URL;
 import java.net.URLConnection;
 
 import org.apache.commons.io.FileUtils;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.invocation.InvocationOnMock;
@@ -40,10 +38,8 @@ import com.pugkung.filedownload.main.URLDownloader;
 
 @PowerMockIgnore("javax.management.*")
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({URL.class, URLConnection.class, FileUtils.class})
+@PrepareForTest({URLConnection.class})
 public class URLDownloaderTester {
-	@Rule
-	public TemporaryFolder tempFolder= new TemporaryFolder();
 	
 	@InjectMocks
 	URLDownloader fd;
@@ -110,19 +106,19 @@ public class URLDownloaderTester {
 		
 		fd = spy(new URLDownloader(testURL, outputPath));
 		
-		File result = new File(outputPath + fd.generateOutputFileName(testURL));
-		result.deleteOnExit();
+		File expectedFile = new File(outputPath + fd.generateOutputFileName(testURL));
+		expectedFile.deleteOnExit();
 		String outputFile = outputPath + fd.generateOutputFileName(testURL);
 		
 		doAnswer(new Answer(){
 			public File answer(InvocationOnMock invocation) throws Throwable {
-				result.createNewFile();
-				return result;
-			}}).when(fd).downloadFromURL(any(URL.class), eq(result));
+				expectedFile.createNewFile();
+				return expectedFile;
+			}}).when(fd).downloadFromURL(any(URL.class), eq(expectedFile));
 		
 		DownloaderStatus status = fd.downloadFile(testURL, outputFile);
 		
-		assertTrue(result.exists());
+		assertTrue(expectedFile.exists());
 		assertEquals(status, DownloaderStatus.COMPLETE);
 	}
 	
@@ -132,15 +128,15 @@ public class URLDownloaderTester {
 		String outputPath = "";
 		
 		fd = spy(new URLDownloader(testURL, outputPath));
-		File result = mock(File.class);
-		result.deleteOnExit();
+		File expectedFile = mock(File.class);
+		expectedFile.deleteOnExit();
 		
 	    doThrow(IOException.class).when(fd).downloadFromURL(any(URL.class), any(File.class));
 		
 		DownloaderStatus status = fd.downloadFile(testURL, outputPath);
 		
 		assertEquals(status,DownloaderStatus.IO_ERROR);
-		assertFalse(result.exists());
+		assertFalse(expectedFile.exists());
 	}
 	
 	@Test
@@ -151,8 +147,8 @@ public class URLDownloaderTester {
 		fd = spy(new URLDownloader(testURL, outputPath));
 		
 		String outputFile = outputPath + fd.generateOutputFileName(testURL);
-		File result = new File(outputFile);
-		result.deleteOnExit();
+		File expectedFile = new File(outputFile);
+		expectedFile.deleteOnExit();
 		
 		URL mockURL = PowerMockito.mock(URL.class);
 		HttpURLConnection mockConnection = PowerMockito.mock(HttpURLConnection.class);
@@ -164,9 +160,9 @@ public class URLDownloaderTester {
 		
 		DownloaderStatus status = fd.downloadFile(testURL, outputFile);
 		
-		verify(fd, times(1)).downloadFromURL(any(URL.class), eq(result));
+		verify(fd, times(1)).downloadFromURL(any(URL.class), eq(expectedFile));
 		assertEquals(status,DownloaderStatus.IO_ERROR);
-		assertFalse(result.exists());
+		assertFalse(expectedFile.exists());
 	}
 	
 	@Test
@@ -177,9 +173,8 @@ public class URLDownloaderTester {
 		fd = spy(new URLDownloader(testURL, outputPath));
 		
 		String outputFile = outputPath + fd.generateOutputFileName(testURL);
-		File result = new File(outputFile);
-		//File result = PowerMockito.mock(File.class);
-		result.deleteOnExit();
+		File expectedFile = new File(outputFile);
+		expectedFile.deleteOnExit();
 		
 		URL mockURL = PowerMockito.mock(URL.class);
 		URLConnection mockConnection = PowerMockito.mock(URLConnection.class);
@@ -195,8 +190,9 @@ public class URLDownloaderTester {
         		
 		doReturn(is).when(mockConnection).getInputStream();
 		
-		fd.downloadFromURL(mockURL, result);
+		fd.downloadFromURL(mockURL, expectedFile);
 		
-		assertTrue(result.exists());
+		f.close();
+		assertTrue(expectedFile.exists());
 	}
 }
