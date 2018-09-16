@@ -18,7 +18,6 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.net.HttpURLConnection;
 import java.net.SocketTimeoutException;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
 
@@ -42,44 +41,6 @@ public class URLDownloaderTester {
 	
 	@InjectMocks
 	URLDownloader fd;
-	
-	@Test
-	public void TestURLDownloader_stripHostNamefromLink() throws URISyntaxException {
-		String testURL = "http://sub.test.com/some/path";
-		String testURL2 = "ftp://10.123.234.254:23/public/file";
-		String testURL3 = "https://www.hello-world.com/temp";
-		
-		URLDownloader fd = new URLDownloader("", "");
-		assertEquals("sub_test_com", fd.getDomainNameFromURL(testURL));
-		assertEquals("10_123_234_254", fd.getDomainNameFromURL(testURL2));
-		assertEquals("hello-world_com", fd.getDomainNameFromURL(testURL3));
-	}
-	
-	@Test
-	public void TestURLDownloader_stripFilePathfromLink() throws URISyntaxException {
-		String testURL = "http://sub.test.com/some/path/afile.txt";
-		String testURL2 = "ftp://10.123.234.254:23/public/";
-		
-		URLDownloader fd = new URLDownloader("", "");
-		assertEquals("_some_path_afile.txt", fd.getFilePathFromURL(testURL));
-		assertEquals("_public_", fd.getFilePathFromURL(testURL2));
-	}
-	
-	@Test(expected = URISyntaxException.class)
-	public void TestURLDownloader_tryParseInvalidURL() throws URISyntaxException {
-		String testURL = "http://sub.test.com/some/path/f i l e w i t h s p a c e";
-		
-		URLDownloader fd = new URLDownloader(testURL, "");
-		assertEquals("", fd.getDomainNameFromURL(testURL));
-	}
-	
-	@Test(expected = URISyntaxException.class)
-	public void TestURLDownloader_tryParseInvalidHost() throws URISyntaxException {
-		String testURL = "ftp://257.255.253.251/folder/";
-		
-		URLDownloader fd = new URLDownloader(testURL, "");
-		assertEquals("", fd.getDomainNameFromURL(testURL));
-	}
 	
 	@Test
 	public void TestURLDownloader_testRunner() throws Exception {
