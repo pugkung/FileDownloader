@@ -5,14 +5,12 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -137,22 +135,35 @@ public class URLDownloaderTester {
 		expectedFile.deleteOnExit();
 		
 		URL mockURL = PowerMockito.mock(URL.class);
-		URLConnection mockConnection = PowerMockito.mock(URLConnection.class);
-		
-		PowerMockito.whenNew(URL.class).withAnyArguments().thenReturn(mockURL);
-		PowerMockito.when(mockURL.openConnection()).thenReturn(mockConnection);
 		
 		// Generate very large file as data stream
-		RandomAccessFile f = new RandomAccessFile("t", "rw");
+		String mockFileName = "mockFile.in";
+		RandomAccessFile f = new RandomAccessFile(mockFileName, "rw");
         f.setLength(1024 * 1024 * 1024);
         
-        ByteArrayInputStream is = new ByteArrayInputStream(f.readLine().getBytes());
-        		
-		doReturn(is).when(mockConnection).getInputStream();
+        doAnswer(new Answer<RandomAccessFile>() {
+			public RandomAccessFile answer(InvocationOnMock invocation) throws Throwable {
+				RandomAccessFile mockFile = new RandomAccessFile(expectedFile,"rw");
+				try {
+					mockFile.seek(0);
+			        for(int i = 0; i < f.length(); i++) {
+			        	mockFile.write(f.read());
+			        }
+			        } catch(IOException ex) {
+			        	//it's EOF
+			        }
+				return mockFile;
+			}}).when(fd).downloadFromURL(any(URL.class), eq(expectedFile));
 		
 		fd.downloadFromURL(mockURL, expectedFile);
 		
 		f.close();
 		assertTrue(expectedFile.exists());
+		
+		// cleanup test data
+		File file1 = new File(mockFileName);
+		File file2 = new File(outputFile);
+		file1.deleteOnExit();
+		file2.deleteOnExit();
 	}
 }
