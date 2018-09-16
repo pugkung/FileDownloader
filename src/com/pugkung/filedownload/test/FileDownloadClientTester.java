@@ -4,7 +4,7 @@ import com.pugkung.filedownload.main.*;
 
 import static org.junit.Assert.*;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyList;
+import static org.mockito.Matchers.anyListOf;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
@@ -15,13 +15,10 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -64,7 +61,7 @@ public class FileDownloadClientTester {
 		when(config.getOutputPath()).thenReturn(testOutputPath);
 		when(config.getURLs()).thenReturn(urlList);
 		
-		doAnswer(new Answer(){
+		doAnswer(new Answer<File>(){
 			public File answer(InvocationOnMock invocation) throws Throwable {
 				expectedFile.createNewFile();
 				return expectedFile;
@@ -72,7 +69,7 @@ public class FileDownloadClientTester {
 		
 		FileDownloadClient.main(new String[] {});
 		
-		verify(fdc, times(1)).distributeURLsToDownloaderThread(anyList(), any(String.class));
+		verify(fdc, times(1)).distributeURLsToDownloaderThread(anyListOf(String.class), any(String.class));
 		verify(fdc, times(1)).executeDownloaderThread(any(String.class), any(String.class));
 		assertTrue(expectedFile.exists());
 	}
@@ -112,7 +109,7 @@ public class FileDownloadClientTester {
 						String targetURL = (String) invocation.getArguments()[0];
 						fd = spy(new URLDownloader(targetURL, testOutputPath));
 						
-						doAnswer(new Answer(){
+						doAnswer(new Answer<File>(){
 							public File answer(InvocationOnMock invocation) throws Throwable {
 								// return file with filename based on the incoming url
 								Object[] arguments = invocation.getArguments();
@@ -132,7 +129,7 @@ public class FileDownloadClientTester {
 		
 		FileDownloadClient.main(new String[] {});
 		
-		verify(fdc, times(1)).distributeURLsToDownloaderThread(anyList(), any(String.class));
+		verify(fdc, times(1)).distributeURLsToDownloaderThread(anyListOf(String.class), any(String.class));
 		verify(fdc, times(4)).executeDownloaderThread(any(String.class), any(String.class));
 		for (File item : expectedFiles) {
 			assertTrue(item.exists());
@@ -179,7 +176,7 @@ public class FileDownloadClientTester {
 							return fd;
 						}
 						
-						doAnswer(new Answer(){
+						doAnswer(new Answer<File>(){
 							public File answer(InvocationOnMock invocation) throws Throwable {
 								// return file with filename based on the incoming url
 								Object[] arguments = invocation.getArguments();
@@ -199,7 +196,7 @@ public class FileDownloadClientTester {
 		
 		FileDownloadClient.main(new String[] {});
 		
-		verify(fdc, times(1)).distributeURLsToDownloaderThread(anyList(), any(String.class));
+		verify(fdc, times(1)).distributeURLsToDownloaderThread(anyListOf(String.class), any(String.class));
 		verify(fdc, times(4)).executeDownloaderThread(any(String.class), any(String.class));
 		
 		// verify that only 2 of 4 file has been successfully downloaded
@@ -236,7 +233,7 @@ public class FileDownloadClientTester {
 		
 		FileDownloadClient.main(new String[] {});
 		
-		verify(fdc, times(1)).distributeURLsToDownloaderThread(anyList(), any(String.class));
+		verify(fdc, times(1)).distributeURLsToDownloaderThread(anyListOf(String.class), any(String.class));
 		verify(fdc, times(1)).executeDownloaderThread(any(String.class), any(String.class));
 		assertFalse(expectedFile.exists());
 	}
@@ -265,7 +262,7 @@ public class FileDownloadClientTester {
 		
 		FileDownloadClient.main(new String[] {});
 		
-		verify(fdc, times(1)).distributeURLsToDownloaderThread(anyList(), any(String.class));
+		verify(fdc, times(1)).distributeURLsToDownloaderThread(anyListOf(String.class), any(String.class));
 		verify(fdc, times(1)).executeDownloaderThread(any(String.class), any(String.class));
 		assertFalse(expectedFile.exists());
 	}
@@ -287,7 +284,7 @@ public class FileDownloadClientTester {
 		
 		FileDownloadClient.main(new String[] {});
 		
-		verify(fdc, times(0)).distributeURLsToDownloaderThread(anyList(), any(String.class));
+		verify(fdc, times(0)).distributeURLsToDownloaderThread(anyListOf(String.class), any(String.class));
 		verify(fdc, times(0)).executeDownloaderThread(any(String.class), any(String.class));
 		assertEquals(FileDownloadClient.ExitStatus.NO_URL_PROVIDED, fdc.getExitStatusCode());
 	}

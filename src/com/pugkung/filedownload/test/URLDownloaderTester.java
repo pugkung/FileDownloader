@@ -22,7 +22,6 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
 
-import org.apache.commons.io.FileUtils;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -110,7 +109,7 @@ public class URLDownloaderTester {
 		expectedFile.deleteOnExit();
 		String outputFile = outputPath + fd.generateOutputFileName(testURL);
 		
-		doAnswer(new Answer(){
+		doAnswer(new Answer<File>(){
 			public File answer(InvocationOnMock invocation) throws Throwable {
 				expectedFile.createNewFile();
 				return expectedFile;
